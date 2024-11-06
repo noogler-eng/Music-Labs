@@ -1,4 +1,4 @@
-import WebSocketServer, { WebSocket } from "ws";
+import { Server, Socket } from "socket.io";
 // @ts-ignore
 import youtubesearchapi from "youtube-search-api";
 import prisma from "./db/prisma";
@@ -12,7 +12,7 @@ const dataZod = z.object({
 
 interface user {
   streamId: string;
-  ws: WebSocket;
+  ws: Socket;
 }
 
 interface room {
@@ -28,10 +28,10 @@ class RoomManager {
     this.rooms = new Map<string, room>();
   }
 
-  async initRoom(streamsId: string, data: any, ws: WebSocket) {
+  async initRoom(streamsId: string, data: any, ws: Socket) {
     if (!this.rooms.get(streamsId)) {
       this.rooms.set(streamsId, {
-        wss: new WebSocketServer.Server({ noServer: true }),
+        wss: new Server(),
         users: [],
       });
       this.rooms.get(streamsId)?.users.push({
@@ -68,7 +68,7 @@ class RoomManager {
     }
   }
 
-  async addSong(streamsId: string, data: any, ws: WebSocket) {
+  async addSong(streamsId: string, data: any, ws: Socket) {
     const room = this.rooms.get(streamsId);
     if (!room) return;
 
@@ -83,7 +83,7 @@ class RoomManager {
     await prisma.stream.create({
       data: {
         userId: streamsId,
-        type: isSuccess.data?.url.includes("spotify") ? "Spotify" : "Youtube",
+        type: isSuccess.data?.url.includes("spotify") ? "SPOTIFY" : "YOUTUBE",
         title: videoData?.title || "",
         url: isSuccess.data?.url || "",
         extractedId: extractedId || "",
@@ -109,7 +109,7 @@ class RoomManager {
     });
   }
 
-  async deleteSong(streamsId: string, data: any, ws: WebSocket) {
+  async deleteSong(streamsId: string, data: any) {
     const room = this.rooms.get(streamsId);
     if (!room) return;
 
@@ -128,12 +128,7 @@ class RoomManager {
     });
   }
 
-  async upVoteSong(
-    userId: string,
-    streamsId: string,
-    data: any,
-    ws: WebSocket
-  ) {
+  async upVoteSong(userId: string, streamsId: string, data: any, ws: Socket) {
     const room = this.rooms.get(streamsId);
     if (!room) return;
 
@@ -168,7 +163,7 @@ class RoomManager {
       },
     });
 
-    room?.wss.clients.forEach((ws: WebSocket) => {
+    room?.wss.clients.forEach((ws: Socket) => {
       ws.send(
         JSON.stringify({
           type: "song added",
@@ -179,12 +174,7 @@ class RoomManager {
     });
   }
 
-  async downVoteSong(
-    userId: string,
-    streamsId: string,
-    data: any,
-    ws: WebSocket
-  ) {
+  async downVoteSong(userId: string, streamsId: string, data: any, ws: Socket) {
     const room = this.rooms.get(streamsId);
     if (!room) return;
 
@@ -205,7 +195,6 @@ class RoomManager {
       );
       return;
     }
-
     await prisma.upvote.deleteMany({
       where: {
         userId: userId,
@@ -219,7 +208,7 @@ class RoomManager {
       },
     });
 
-    room?.wss.clients.forEach((ws: WebSocket) => {
+    room?.wss.clients.forEach((ws: Socket) => {
       ws.send(
         JSON.stringify({
           type: "song added",
@@ -230,7 +219,7 @@ class RoomManager {
     });
   }
 
-  async leaveRoom(streamsId: string, data: any, ws: WebSocket) {
+  async leaveRoom(streamsId: string, data: any, ws: Socket) {
     const room = this.rooms.get(streamsId);
     if (!room) return;
 

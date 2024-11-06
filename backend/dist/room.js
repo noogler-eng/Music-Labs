@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const ws_1 = __importDefault(require("ws"));
+const socket_io_1 = require("socket.io");
 // @ts-ignore
 const youtube_search_api_1 = __importDefault(require("youtube-search-api"));
 const prisma_1 = __importDefault(require("./db/prisma"));
@@ -30,7 +30,7 @@ class RoomManager {
             var _a, _b;
             if (!this.rooms.get(streamsId)) {
                 this.rooms.set(streamsId, {
-                    wss: new ws_1.default.Server({ noServer: true }),
+                    wss: new socket_io_1.Server(),
                     users: [],
                 });
                 (_a = this.rooms.get(streamsId)) === null || _a === void 0 ? void 0 : _a.users.push({
@@ -42,7 +42,6 @@ class RoomManager {
                         userId: streamsId,
                     },
                 });
-                console.log('songs: ', songs);
                 if (!songs) {
                     ws.send(JSON.stringify({
                         error: "no song exists",
@@ -80,7 +79,7 @@ class RoomManager {
             yield prisma_1.default.stream.create({
                 data: {
                     userId: streamsId,
-                    type: ((_c = isSuccess.data) === null || _c === void 0 ? void 0 : _c.url.includes("spotify")) ? "Spotify" : "Youtube",
+                    type: ((_c = isSuccess.data) === null || _c === void 0 ? void 0 : _c.url.includes("spotify")) ? "SPOTIFY" : "YOUTUBE",
                     title: (videoData === null || videoData === void 0 ? void 0 : videoData.title) || "",
                     url: ((_d = isSuccess.data) === null || _d === void 0 ? void 0 : _d.url) || "",
                     extractedId: extractedId || "",
@@ -102,14 +101,14 @@ class RoomManager {
             });
         });
     }
-    deleteSong(streamsId, data, ws) {
+    deleteSong(streamsId, data) {
         return __awaiter(this, void 0, void 0, function* () {
             const room = this.rooms.get(streamsId);
             if (!room)
                 return;
             yield prisma_1.default.stream.deleteMany({
                 where: {
-                    id: data.streamId,
+                    id: data.songId,
                 },
             });
             room === null || room === void 0 ? void 0 : room.wss.clients.forEach((ws) => {
@@ -119,18 +118,86 @@ class RoomManager {
             });
         });
     }
-    upVoteSong(streamsId, data, ws) {
-        return __awaiter(this, void 0, void 0, function* () { });
+    upVoteSong(userId, streamsId, data, ws) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const room = this.rooms.get(streamsId);
+            if (!room)
+                return;
+            const user = yield prisma_1.default.upvote.findFirst({
+                where: {
+                    userId: userId,
+                    streamId: data.songId,
+                },
+            });
+            if (user) {
+                ws.send(JSON.stringify(JSON.stringify({
+                    type: "already voted",
+                })));
+                return;
+            }
+            yield prisma_1.default.upvote.create({
+                data: {
+                    userId: userId,
+                    streamId: data.songId,
+                },
+            });
+            const songs = yield prisma_1.default.stream.findMany({
+                where: {
+                    userId: streamsId,
+                },
+            });
+            room === null || room === void 0 ? void 0 : room.wss.clients.forEach((ws) => {
+                ws.send(JSON.stringify({
+                    type: "song added",
+                    currentSong: songs[0],
+                    queueSongs: songs.slice(1, songs.length),
+                }));
+            });
+        });
     }
-    downVoteSong(streamsId, data, ws) {
-        return __awaiter(this, void 0, void 0, function* () { });
+    downVoteSong(userId, streamsId, data, ws) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const room = this.rooms.get(streamsId);
+            if (!room)
+                return;
+            const user = yield prisma_1.default.upvote.findFirst({
+                where: {
+                    userId: userId,
+                    streamId: data.songId,
+                },
+            });
+            if (!user) {
+                ws.send(JSON.stringify(JSON.stringify({
+                    type: "not voted yet",
+                })));
+                return;
+            }
+            yield prisma_1.default.upvote.deleteMany({
+                where: {
+                    userId: userId,
+                    streamId: data.songId,
+                },
+            });
+            const songs = yield prisma_1.default.stream.findMany({
+                where: {
+                    userId: streamsId,
+                },
+            });
+            room === null || room === void 0 ? void 0 : room.wss.clients.forEach((ws) => {
+                ws.send(JSON.stringify({
+                    type: "song added",
+                    currentSong: songs[0],
+                    queueSongs: songs.slice(1, songs.length),
+                }));
+            });
+        });
     }
     leaveRoom(streamsId, data, ws) {
         return __awaiter(this, void 0, void 0, function* () {
             const room = this.rooms.get(streamsId);
             if (!room)
                 return;
-            room.users = room.users.filter(user => user.ws !== ws);
+            room.users = room.users.filter((user) => user.ws !== ws);
             if (room.users.length === 0) {
                 this.rooms.delete(streamsId);
             }

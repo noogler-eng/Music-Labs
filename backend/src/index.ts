@@ -1,27 +1,50 @@
-import WebSocketServer, { WebSocket } from "ws";
+import { Server, Socket } from "socket.io";
+import express from "express";
+import { createServer } from "http";
+import cors from "cors";
 import RoomManager from "./room";
+import authRouter from "./authRoutes";
 
-const wss = new WebSocketServer.Server({ port: 8080 });
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
+
 const roomManager = new RoomManager();
 
-wss.on("connection", function connection(ws) {
-  ws.on("error", console.error);
+app.get("/", (req, res) => {
+  res.json({
+    msg: "server is working an currently in express server",
+  });
+});
 
-  ws.on("message", async function message(data) {
-    await handelIncommingUser(JSON.parse(data.toString()), ws);
+app.use(authRouter);
+
+io.on("connection", function connection(socket: Socket) {
+  socket.on("error", console.error);
+
+  socket.on("message", async function message(data) {
+    await handelIncommingUser(JSON.parse(data.toString()), socket);
     console.log("func");
   });
 
-  ws.send("welcome you are connected to main ws server");
+  console.log("someone is connected");
+  socket.emit("message", "welcome you are connected to main ws server");
 });
 
-function handelIncommingUser(data: any, ws: WebSocket) {
+function handelIncommingUser(data: any, ws: Socket) {
   if (data.type == "init_room") {
     roomManager.initRoom(data.streamsId, data, ws);
   } else if (data.type == "add_song") {
     roomManager.addSong(data.streamsId, data, ws);
   } else if (data.type == "delete_song") {
-    roomManager.deleteSong(data.streamsId, data, ws);
+    roomManager.deleteSong(data.streamsId, data);
   } else if (data.type == "upvote_song") {
     roomManager.upVoteSong(data.userId, data.streamsId, data, ws);
   } else if (data.type == "downvote_song") {
@@ -30,3 +53,7 @@ function handelIncommingUser(data: any, ws: WebSocket) {
     roomManager.leaveRoom(data.streamsId, data, ws);
   }
 }
+
+server.listen(3000, () => {
+  console.log("server running at http://localhost:3000");
+});

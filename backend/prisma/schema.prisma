@@ -13,48 +13,47 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum provider {
-  Google
-}
 
 enum streamType {
   Spotify
   Youtube
 }
 
-// every user will have buch of stream
-// every user will upvote in many streams many time
-model User{
-  id          String     @id @default(uuid())
-  name        String
-  provider    provider
-  email       String  @unique
-  stream      Stream[]
-  upvotes     Upvote[]
+enum StreamType {
+  SPOTIFY
+  YOUTUBE
 }
 
-// every stream will have bucnh of upvotes
-model Stream{
-  id          String     @id @default(uuid())
-  type        streamType
-  active      Boolean @default(true)
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  imageUrl  String
+  streams   Stream[]
+  upvotes   Upvote[]
+}
+
+model Stream {
+  id          String    @id @default(uuid())
+  type        StreamType
+  active      Boolean   @default(true)
   url         String
   title       String
   smallImg    String
   bigImg      String
-  upvotes     Upvote[] 
-  creator     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String     
+  upvotes     Upvote[]
+  creator     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
   extractedId String
 }
 
-// how single upvote look like this
-model Upvote{
-  id          String     @id @default(uuid())
-  upvoter     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  streamTo    Stream    @relation(fields: [streamId], references: [id], onDelete: Cascade)
-  streamId    String
-  // it must be unique means userId must upvote an stream only single time
+model Upvote {
+  id        String @id @default(uuid())
+  upvoter   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  stream    Stream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  streamId  String
+
   @@unique([userId, streamId])
 }
