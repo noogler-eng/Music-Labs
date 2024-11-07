@@ -12,7 +12,7 @@ app.use(express.json());
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: "http://localhost:5173",
   },
 });
 
@@ -30,21 +30,24 @@ io.on("connection", function connection(socket: Socket) {
   socket.on("error", console.error);
 
   socket.on("message", async function message(data) {
-    await handelIncommingUser(JSON.parse(data.toString()), socket);
-    console.log("func");
+    await handelIncommingUser((data), socket);
   });
 
   console.log("someone is connected");
-  socket.emit("message", "welcome you are connected to main ws server");
 });
 
 function handelIncommingUser(data: any, ws: Socket) {
   if (data.type == "init_room") {
-    roomManager.initRoom(data.streamsId, data, ws);
+    console.log('init_room')
+    // data = {streamId: "", userId: "", type: "init_room"}
+    roomManager.initRoom(data.streamId, {userId: data.userId}, ws);
   } else if (data.type == "add_song") {
-    roomManager.addSong(data.streamsId, data, ws);
+    console.log('add_song')
+    // data = {streamId: "", url: "", type: "add_song"}
+    roomManager.addSong(data.streamId, {url: data.url});
   } else if (data.type == "delete_song") {
-    roomManager.deleteSong(data.streamsId, data);
+    // data = {streamId: "", id: string, type: "delete_song"}
+    roomManager.deleteSong(data.streamId, {id: data.id});
   } else if (data.type == "upvote_song") {
     roomManager.upVoteSong(data.userId, data.streamsId, data, ws);
   } else if (data.type == "downvote_song") {

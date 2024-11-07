@@ -1,11 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useRecoilValue } from "recoil";
+import { useRecoilState } from "recoil";
 import userAtom from "../../store/user/userAtom";
 import { Button } from "@nextui-org/react";
 import { Avatar } from "@nextui-org/react";
 
 export default function Navbar() {
-  const user = useRecoilValue(userAtom);
+  const [user, setUser] = useRecoilState(userAtom);
   const navigate = useNavigate();
 
   return (
@@ -20,7 +20,15 @@ export default function Navbar() {
           <Avatar isBordered color="success" src={user.imageUrl} />
         )}
         {user ? (
-          <Button color="default">Logout</Button>
+          <Button
+            color="default"
+            onClick={() => {
+              localStorage.removeItem("token");
+              setUser(null);
+            }}
+          >
+            Logout
+          </Button>
         ) : (
           <Button
             color="default"

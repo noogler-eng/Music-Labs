@@ -7,11 +7,11 @@ import { z } from "zod";
 var YT_REGEX =
   /^(?:(?:https?:)?\/\/)?(?:www\.)?(?:m\.)?(?:youtu(?:be)?\.com\/(?:v\/|embed\/|watch(?:\/|\?v=))|youtu\.be\/)((?:\w|-){11})(?:\S+)?$/;
 const dataZod = z.object({
-  url: z.string().includes("youtube").or(z.string().includes("spotify")), // either has youtube or spotify
+  url: z.string().includes("youtube").or(z.string().includes("spotify")),
 });
 
 interface user {
-  streamId: string;
+  userId: string;
   ws: Socket;
 }
 
@@ -28,48 +28,60 @@ class RoomManager {
     this.rooms = new Map<string, room>();
   }
 
-  async initRoom(streamsId: string, data: any, ws: Socket) {
-    if (!this.rooms.get(streamsId)) {
-      this.rooms.set(streamsId, {
+  async initRoom(
+    streamId: string,
+    data: {
+      userId: string;
+    },
+    ws: Socket
+  ) {
+    if (!this.rooms.get(streamId)) {
+      this.rooms.set(streamId, {
         wss: new Server(),
         users: [],
       });
-      this.rooms.get(streamsId)?.users.push({
-        streamId: data.streamId,
+      this.rooms.get(streamId)?.users.push({
+        userId: data.userId,
         ws: ws,
       });
-
-      const songs = await prisma.stream.findMany({
-        where: {
-          userId: streamsId,
-        },
-      });
-
-      if (!songs) {
-        ws.send(
-          JSON.stringify({
-            error: "no song exists",
-          })
-        );
-      } else {
-        ws.send(
-          JSON.stringify({
-            type: "init room",
-            currentSong: songs[0],
-            queueSongs: songs.slice(1, songs.length),
-          })
-        );
-      }
     } else {
-      this.rooms.get(streamsId)?.users.push({
-        streamId: data.streamId,
+      this.rooms.get(streamId)?.users.push({
+        userId: data.userId,
         ws: ws,
       });
     }
+
+    const room = this.rooms.get(streamId);
+    if (!room) throw new Error("no room");
+
+    const songs = await prisma.stream.findMany({
+      where: {
+        userId: streamId,
+      },
+    });
+
+    if (songs.length == 0) {
+      ws.emit("error", "no song is there!");
+    } else {
+      ws.emit(
+        "songs",
+        JSON.stringify({
+          currentSong: songs[0],
+          queueSongs: songs.slice(1, songs.length),
+        })
+      );
+    }
+
+    ws.on("disconnect", () => {
+      room.users = room.users.filter((user) => user.userId !== data.userId);
+      if (room.users.length === 0) {
+        this.rooms.delete(streamId);
+      }
+    });
   }
 
-  async addSong(streamsId: string, data: any, ws: Socket) {
-    const room = this.rooms.get(streamsId);
+  async addSong(streamId: string, data: any) {
+    const room = this.rooms.get(streamId);
     if (!room) return;
 
     const isSuccess = dataZod.safeParse(data);
@@ -82,7 +94,7 @@ class RoomManager {
 
     await prisma.stream.create({
       data: {
-        userId: streamsId,
+        userId: streamId,
         type: isSuccess.data?.url.includes("spotify") ? "SPOTIFY" : "YOUTUBE",
         title: videoData?.title || "",
         url: isSuccess.data?.url || "",
@@ -92,44 +104,24 @@ class RoomManager {
       },
     });
 
-    const songs = await prisma.stream.findMany({
-      where: {
-        userId: streamsId,
-      },
-    });
-
-    room?.wss.clients.forEach((ws: WebSocket) => {
-      ws.send(
-        JSON.stringify({
-          type: "song added",
-          currentSong: songs[0],
-          queueSongs: songs.slice(1, songs.length),
-        })
-      );
-    });
+    await this.broadcastToRoom(streamId);
   }
 
-  async deleteSong(streamsId: string, data: any) {
-    const room = this.rooms.get(streamsId);
+  async deleteSong(streamId: string, data: any) {
+    const room = this.rooms.get(streamId);
     if (!room) return;
 
     await prisma.stream.deleteMany({
       where: {
-        id: data.songId,
+        id: data.id,
       },
     });
 
-    room?.wss.clients.forEach((ws: WebSocket) => {
-      ws.send(
-        JSON.stringify({
-          type: "song deleted",
-        })
-      );
-    });
+    await this.broadcastToRoom(streamId);
   }
 
-  async upVoteSong(userId: string, streamsId: string, data: any, ws: Socket) {
-    const room = this.rooms.get(streamsId);
+  async upVoteSong(userId: string, streamId: string, data: any, ws: Socket) {
+    const room = this.rooms.get(streamId);
     if (!room) return;
 
     const user = await prisma.upvote.findFirst({
@@ -157,25 +149,11 @@ class RoomManager {
       },
     });
 
-    const songs = await prisma.stream.findMany({
-      where: {
-        userId: streamsId,
-      },
-    });
-
-    room?.wss.clients.forEach((ws: Socket) => {
-      ws.send(
-        JSON.stringify({
-          type: "song added",
-          currentSong: songs[0],
-          queueSongs: songs.slice(1, songs.length),
-        })
-      );
-    });
+    await this.broadcastToRoom(streamId);
   }
 
-  async downVoteSong(userId: string, streamsId: string, data: any, ws: Socket) {
-    const room = this.rooms.get(streamsId);
+  async downVoteSong(userId: string, streamId: string, data: any, ws: Socket) {
+    const room = this.rooms.get(streamId);
     if (!room) return;
 
     const user = await prisma.upvote.findFirst({
@@ -202,21 +180,7 @@ class RoomManager {
       },
     });
 
-    const songs = await prisma.stream.findMany({
-      where: {
-        userId: streamsId,
-      },
-    });
-
-    room?.wss.clients.forEach((ws: Socket) => {
-      ws.send(
-        JSON.stringify({
-          type: "song added",
-          currentSong: songs[0],
-          queueSongs: songs.slice(1, songs.length),
-        })
-      );
-    });
+    await this.broadcastToRoom(streamId);
   }
 
   async leaveRoom(streamsId: string, data: any, ws: Socket) {
@@ -229,10 +193,25 @@ class RoomManager {
     }
   }
 
-  broadcastToRoom(streamsId: string, message: any) {
-    const room = this.rooms.get(streamsId);
-    room?.wss.clients.forEach((client: WebSocket) => {
-      client.send(JSON.stringify(message));
+  async broadcastToRoom(streamId: string) {
+    const room = this.rooms.get(streamId);
+    if (!room) return;
+
+    const songs = await prisma.stream.findMany({
+      where: { userId: streamId },
+    });
+
+    console.log("Broadcasting songs to room:", streamId);
+
+    // Prepare the data to send to each client
+    const songData = JSON.stringify({
+      currentSong: songs[0] || null,
+      queueSongs: songs.slice(1),
+    });
+
+    // Emit the song data to each user in the room
+    room.users.forEach((user) => {
+      user.ws.emit("songs", songData);
     });
   }
 }

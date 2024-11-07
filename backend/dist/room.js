@@ -19,54 +19,60 @@ const prisma_1 = __importDefault(require("./db/prisma"));
 const zod_1 = require("zod");
 var YT_REGEX = /^(?:(?:https?:)?\/\/)?(?:www\.)?(?:m\.)?(?:youtu(?:be)?\.com\/(?:v\/|embed\/|watch(?:\/|\?v=))|youtu\.be\/)((?:\w|-){11})(?:\S+)?$/;
 const dataZod = zod_1.z.object({
-    url: zod_1.z.string().includes("youtube").or(zod_1.z.string().includes("spotify")), // either has youtube or spotify
+    url: zod_1.z.string().includes("youtube").or(zod_1.z.string().includes("spotify")),
 });
 class RoomManager {
     constructor() {
         this.rooms = new Map();
     }
-    initRoom(streamsId, data, ws) {
+    initRoom(streamId, data, ws) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
-            if (!this.rooms.get(streamsId)) {
-                this.rooms.set(streamsId, {
+            if (!this.rooms.get(streamId)) {
+                this.rooms.set(streamId, {
                     wss: new socket_io_1.Server(),
                     users: [],
                 });
-                (_a = this.rooms.get(streamsId)) === null || _a === void 0 ? void 0 : _a.users.push({
-                    streamId: data.streamId,
+                (_a = this.rooms.get(streamId)) === null || _a === void 0 ? void 0 : _a.users.push({
+                    userId: data.userId,
                     ws: ws,
                 });
-                const songs = yield prisma_1.default.stream.findMany({
-                    where: {
-                        userId: streamsId,
-                    },
-                });
-                if (!songs) {
-                    ws.send(JSON.stringify({
-                        error: "no song exists",
-                    }));
-                }
-                else {
-                    ws.send(JSON.stringify({
-                        type: "init room",
-                        currentSong: songs[0],
-                        queueSongs: songs.slice(1, songs.length),
-                    }));
-                }
             }
             else {
-                (_b = this.rooms.get(streamsId)) === null || _b === void 0 ? void 0 : _b.users.push({
-                    streamId: data.streamId,
+                (_b = this.rooms.get(streamId)) === null || _b === void 0 ? void 0 : _b.users.push({
+                    userId: data.userId,
                     ws: ws,
                 });
             }
+            const room = this.rooms.get(streamId);
+            if (!room)
+                throw new Error("no room");
+            const songs = yield prisma_1.default.stream.findMany({
+                where: {
+                    userId: streamId,
+                },
+            });
+            if (songs.length == 0) {
+                ws.emit("error", "no song is there!");
+            }
+            else {
+                ws.emit("songs", JSON.stringify({
+                    currentSong: songs[0],
+                    queueSongs: songs.slice(1, songs.length),
+                }));
+            }
+            ws.on("disconnect", () => {
+                room.users = room.users.filter((user) => user.userId !== data.userId);
+                if (room.users.length === 0) {
+                    this.rooms.delete(streamId);
+                }
+            });
         });
     }
-    addSong(streamsId, data, ws) {
+    addSong(streamId, data) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b, _c, _d;
-            const room = this.rooms.get(streamsId);
+            const room = this.rooms.get(streamId);
             if (!room)
                 return;
             const isSuccess = dataZod.safeParse(data);
@@ -78,7 +84,7 @@ class RoomManager {
             const length = videoData.thumbnail.thumbnails.length;
             yield prisma_1.default.stream.create({
                 data: {
-                    userId: streamsId,
+                    userId: streamId,
                     type: ((_c = isSuccess.data) === null || _c === void 0 ? void 0 : _c.url.includes("spotify")) ? "SPOTIFY" : "YOUTUBE",
                     title: (videoData === null || videoData === void 0 ? void 0 : videoData.title) || "",
                     url: ((_d = isSuccess.data) === null || _d === void 0 ? void 0 : _d.url) || "",
@@ -87,40 +93,25 @@ class RoomManager {
                     bigImg: videoData.thumbnail.thumbnails[length - 1].url || "",
                 },
             });
-            const songs = yield prisma_1.default.stream.findMany({
-                where: {
-                    userId: streamsId,
-                },
-            });
-            room === null || room === void 0 ? void 0 : room.wss.clients.forEach((ws) => {
-                ws.send(JSON.stringify({
-                    type: "song added",
-                    currentSong: songs[0],
-                    queueSongs: songs.slice(1, songs.length),
-                }));
-            });
+            yield this.broadcastToRoom(streamId);
         });
     }
-    deleteSong(streamsId, data) {
+    deleteSong(streamId, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            const room = this.rooms.get(streamsId);
+            const room = this.rooms.get(streamId);
             if (!room)
                 return;
             yield prisma_1.default.stream.deleteMany({
                 where: {
-                    id: data.songId,
+                    id: data.id,
                 },
             });
-            room === null || room === void 0 ? void 0 : room.wss.clients.forEach((ws) => {
-                ws.send(JSON.stringify({
-                    type: "song deleted",
-                }));
-            });
+            yield this.broadcastToRoom(streamId);
         });
     }
-    upVoteSong(userId, streamsId, data, ws) {
+    upVoteSong(userId, streamId, data, ws) {
         return __awaiter(this, void 0, void 0, function* () {
-            const room = this.rooms.get(streamsId);
+            const room = this.rooms.get(streamId);
             if (!room)
                 return;
             const user = yield prisma_1.default.upvote.findFirst({
@@ -141,23 +132,12 @@ class RoomManager {
                     streamId: data.songId,
                 },
             });
-            const songs = yield prisma_1.default.stream.findMany({
-                where: {
-                    userId: streamsId,
-                },
-            });
-            room === null || room === void 0 ? void 0 : room.wss.clients.forEach((ws) => {
-                ws.send(JSON.stringify({
-                    type: "song added",
-                    currentSong: songs[0],
-                    queueSongs: songs.slice(1, songs.length),
-                }));
-            });
+            yield this.broadcastToRoom(streamId);
         });
     }
-    downVoteSong(userId, streamsId, data, ws) {
+    downVoteSong(userId, streamId, data, ws) {
         return __awaiter(this, void 0, void 0, function* () {
-            const room = this.rooms.get(streamsId);
+            const room = this.rooms.get(streamId);
             if (!room)
                 return;
             const user = yield prisma_1.default.upvote.findFirst({
@@ -178,18 +158,7 @@ class RoomManager {
                     streamId: data.songId,
                 },
             });
-            const songs = yield prisma_1.default.stream.findMany({
-                where: {
-                    userId: streamsId,
-                },
-            });
-            room === null || room === void 0 ? void 0 : room.wss.clients.forEach((ws) => {
-                ws.send(JSON.stringify({
-                    type: "song added",
-                    currentSong: songs[0],
-                    queueSongs: songs.slice(1, songs.length),
-                }));
-            });
+            yield this.broadcastToRoom(streamId);
         });
     }
     leaveRoom(streamsId, data, ws) {
@@ -203,10 +172,24 @@ class RoomManager {
             }
         });
     }
-    broadcastToRoom(streamsId, message) {
-        const room = this.rooms.get(streamsId);
-        room === null || room === void 0 ? void 0 : room.wss.clients.forEach((client) => {
-            client.send(JSON.stringify(message));
+    broadcastToRoom(streamId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const room = this.rooms.get(streamId);
+            if (!room)
+                return;
+            const songs = yield prisma_1.default.stream.findMany({
+                where: { userId: streamId },
+            });
+            console.log("Broadcasting songs to room:", streamId);
+            // Prepare the data to send to each client
+            const songData = JSON.stringify({
+                currentSong: songs[0] || null,
+                queueSongs: songs.slice(1),
+            });
+            // Emit the song data to each user in the room
+            room.users.forEach((user) => {
+                user.ws.emit("songs", songData);
+            });
         });
     }
 }

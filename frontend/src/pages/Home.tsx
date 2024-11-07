@@ -9,8 +9,14 @@ import axios from "axios";
 
 export default function Home() {
   const navigate = useNavigate();
-  const [user, setUser] = useRecoilState(userAtom);
   const [streamerId, setStreamerId] = useState("");
+
+  const handelStreams = (e: any) => {
+    e.preventDefault();
+    navigate(`/streams/${streamerId}`);
+  };
+
+  const [user, setUser] = useRecoilState(userAtom);
 
   const handelUserData = async () => {
     try {
@@ -26,13 +32,9 @@ export default function Home() {
         imageUrl: userData.imageUrl,
       });
     } catch (error) {
+      setUser(null);
       console.log(error);
     }
-  };
-
-  const handelStreams = (e: any) => {
-    e.preventDefault();
-    navigate(`/streams/${streamerId}`);
   };
 
   useEffect(() => {
