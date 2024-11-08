@@ -17,7 +17,7 @@ export default function Signin() {
     setLoading(true);
     try {
       if (!data.email || !data.password) throw new Error("Unfilled Details!");
-      const res = await axios.post("http://localhost:3000/signin", data);
+      const res = await axios.post(`${import.meta.env.VITE_SERVER}/signin`, data);
       const token = res.data.token;
       localStorage.setItem("token", `Bearer ${token}`);
       navigate("/");

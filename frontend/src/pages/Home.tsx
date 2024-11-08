@@ -20,7 +20,7 @@ export default function Home() {
 
   const handelUserData = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/getUser", {
+      const res = await axios.get(`${import.meta.env.VITE_SERVER}/getUser`, {
         headers: {
           Authorization: localStorage.getItem("token") || "",
         },

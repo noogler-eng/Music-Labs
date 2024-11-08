@@ -34,7 +34,7 @@ export default function Signup() {
       );
       imageUrl = await response.data.secure_url;
 
-      await axios.post("http://localhost:3000/signup", {
+      await axios.post(`${import.meta.env.VITE_SERVER}/signup`, {
         name: data.username,
         email: data.email,
         image: imageUrl,

@@ -53,7 +53,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!socket) {
-      const newSocket: Socket = io("ws://localhost:3000");
+      const newSocket: Socket = io(import.meta.env.VITE_SOCKET_SERVER);
       setSocket(newSocket);
       console.log("Socket initialized:", newSocket);
 
