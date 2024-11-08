@@ -12,8 +12,11 @@ export default function Navbar() {
     <div className="flex justify-between px-4 py-4 items-center">
       <div className="text-3xl">Music-Labs</div>
       <div className="flex gap-3 items-center">
-        <Link to={"/about"} className="hover:text-red-500">
-          /About
+        <Link to={"/about"} className="hover:underline text-sm underline">
+          About
+        </Link>
+        <Link to={"/"} className="hover:underline text-sm underline">
+          Home
         </Link>
 
         {user && user.imageUrl && (

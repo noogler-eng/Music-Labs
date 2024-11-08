@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { io, Socket } from "socket.io-client";
 import userAtom from "../../store/user/userAtom";
@@ -8,6 +8,8 @@ import { Input } from "@nextui-org/react";
 import { Button } from "@nextui-org/react";
 import SongPlayer from "../components/SongPlayer";
 import SongsList from "../components/SongList";
+import { Copy } from "lucide-react";
+import { Code } from "@nextui-org/react";
 
 export default function Dashboard() {
   const user = useRecoilValue(userAtom);
@@ -16,6 +18,7 @@ export default function Dashboard() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [queue, setQueue] = useState<any>(null);
   const [longQueue, setLongQueue] = useState([]);
+  const urlRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -86,9 +89,29 @@ export default function Dashboard() {
     }
   }, [user]);
 
+  const handleCopy = () => {
+    if (urlRef.current) {
+      navigator.clipboard
+        // @ts-ignore
+        .writeText(urlRef.current?.innerText)
+        .then(() => {
+          alert("URL copied to clipboard!");
+        })
+        .catch((err) => {
+          console.error("Failed to copy: ", err);
+        });
+    }
+  };
+
   return (
     <div className="min-h-screen w-full flex flex-col">
       <Navbar />
+      <div className="flex gap-2 items-center justify-center">
+        <Code ref={urlRef}>{`${user?.id}`}</Code>
+        <div>
+          <Copy size={16} onClick={handleCopy} />
+        </div>
+      </div>
       <div className="flex justify-center flex-grow p-10">
         <div className="w-1/4 flex-grow p-4 bg-[url('dashHero.webp')] bg-clip-content bg-origin-content bg-center bg-no-repeat bg-cover"></div>
         <div className="w-2/4 flex-grow p-4">

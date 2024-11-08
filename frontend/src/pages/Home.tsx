@@ -44,7 +44,7 @@ export default function Home() {
   return (
     <div className="w-full min-h-screen flex flex-col">
       <Navbar />
-      <div className="w-full flex-grow flex flex-col justify-center items-center">
+      <div className="w-full flex-grow flex flex-col justify-center items-center gap-8">
         {user && (
           <div className="flex justify-between w-1/2 items-center gap-10">
             <Button
@@ -73,6 +73,16 @@ export default function Home() {
             </form>
           </div>
         )}
+        <div className="flex w-1/2 flex-wrap md:flex-nowrap gap-4">
+          <Input
+            type="text"
+            placeholder="Enter your email"
+            disabled={true}
+            value={
+              "Please note: paste only valid youtube song URL, no remix striclty prohibited"
+            }
+          />
+        </div>
       </div>
     </div>
   );
