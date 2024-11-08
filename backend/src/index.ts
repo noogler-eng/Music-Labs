@@ -4,6 +4,8 @@ import { createServer } from "http";
 import cors from "cors";
 import RoomManager from "./room";
 import authRouter from "./authRoutes";
+import dotenv from "dotenv"
+dotenv.config();
 
 const app = express();
 app.use(cors());
@@ -59,6 +61,6 @@ function handelIncommingUser(data: any, ws: Socket) {
   }
 }
 
-server.listen(3000, () => {
+server.listen(process.env.PORT || 3000, () => {
   console.log("server running at http://localhost:3000");
 });
