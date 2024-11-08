@@ -24,7 +24,7 @@ app.use(express_1.default.json());
 const server = (0, http_1.createServer)(app);
 const io = new socket_io_1.Server(server, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: "*",
     },
 });
 const roomManager = new room_1.default();
