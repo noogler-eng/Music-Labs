@@ -4,7 +4,7 @@ import { createServer } from "http";
 import cors from "cors";
 import RoomManager from "./room";
 import authRouter from "./authRoutes";
-import dotenv from "dotenv"
+import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
@@ -14,7 +14,8 @@ app.use(express.json());
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: "*", 
+    methods: ["GET", "POST"],
   },
 });
 
