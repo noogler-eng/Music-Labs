@@ -70,9 +70,10 @@ class RoomManager {
       return;
     }
 
+    console.log(extractedId);
     const videoData = await youtubesearchapi.GetVideoDetails(extractedId);
     console.log(videoData);
-    const length = videoData.thumbnail.thumbnails.length;
+    const length = videoData?.thumbnail?.thumbnails?.length;
 
     await prisma.stream.create({
       data: {
@@ -81,8 +82,8 @@ class RoomManager {
         title: videoData?.title || "",
         url: isSuccess.data?.url || "",
         extractedId: extractedId || "",
-        smallImg: videoData.thumbnail.thumbnails[length - 2].url || "",
-        bigImg: videoData.thumbnail.thumbnails[length - 1].url || "",
+        smallImg: videoData?.thumbnail?.thumbnails[length - 2].url || "",
+        bigImg: videoData?.thumbnail?.thumbnails[length - 1].url || "",
       },
     });
 
