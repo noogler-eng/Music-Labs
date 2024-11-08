@@ -71,6 +71,7 @@ class RoomManager {
     }
 
     const videoData = await youtubesearchapi.GetVideoDetails(extractedId);
+    console.log(videoData);
     const length = videoData.thumbnail.thumbnails.length;
 
     await prisma.stream.create({
