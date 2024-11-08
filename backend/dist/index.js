@@ -38,33 +38,32 @@ io.on("connection", function connection(socket) {
     socket.on("error", console.error);
     socket.on("message", function message(data) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield handelIncommingUser((data), socket);
+            yield handelIncommingUser(data, socket);
         });
     });
     console.log("someone is connected");
 });
 function handelIncommingUser(data, ws) {
     if (data.type == "init_room") {
-        console.log('init_room');
+        console.log("init_room");
         // data = {streamId: "", userId: "", type: "init_room"}
         roomManager.initRoom(data.streamId, { userId: data.userId }, ws);
     }
     else if (data.type == "add_song") {
-        console.log('add_song');
+        console.log("add_song");
         // data = {streamId: "", url: "", type: "add_song"}
         roomManager.addSong(data.streamId, { url: data.url });
     }
     else if (data.type == "delete_song") {
+        console.log("delete_song");
         // data = {streamId: "", id: string, type: "delete_song"}
         roomManager.deleteSong(data.streamId, { id: data.id });
     }
-    else if (data.type == "upvote_song") {
-        roomManager.upVoteSong(data.userId, data.streamsId, data, ws);
-    }
-    else if (data.type == "downvote_song") {
-        roomManager.downVoteSong(data.userId, data.streamsId, data, ws);
+    else if (data.type == "vote_song") {
+        roomManager.voteSong(data.streamId, { userId: data.userId, songId: data.songId });
     }
     else {
+        console.log("leave_room");
         roomManager.leaveRoom(data.streamsId, data, ws);
     }
 }

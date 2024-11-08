@@ -25,6 +25,9 @@ class RoomManager {
     constructor() {
         this.rooms = new Map();
     }
+    getRoom(streamId) {
+        return this.rooms.get(streamId);
+    }
     initRoom(streamId, data, ws) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
@@ -44,29 +47,7 @@ class RoomManager {
                     ws: ws,
                 });
             }
-            const room = this.rooms.get(streamId);
-            if (!room)
-                throw new Error("no room");
-            const songs = yield prisma_1.default.stream.findMany({
-                where: {
-                    userId: streamId,
-                },
-            });
-            if (songs.length == 0) {
-                ws.emit("error", "no song is there!");
-            }
-            else {
-                ws.emit("songs", JSON.stringify({
-                    currentSong: songs[0],
-                    queueSongs: songs.slice(1, songs.length),
-                }));
-            }
-            ws.on("disconnect", () => {
-                room.users = room.users.filter((user) => user.userId !== data.userId);
-                if (room.users.length === 0) {
-                    this.rooms.delete(streamId);
-                }
-            });
+            this.broadcastToRoom(streamId);
         });
     }
     addSong(streamId, data) {
@@ -109,67 +90,49 @@ class RoomManager {
             yield this.broadcastToRoom(streamId);
         });
     }
-    upVoteSong(userId, streamId, data, ws) {
+    voteSong(streamId, data) {
         return __awaiter(this, void 0, void 0, function* () {
             const room = this.rooms.get(streamId);
             if (!room)
                 return;
             const user = yield prisma_1.default.upvote.findFirst({
                 where: {
-                    userId: userId,
+                    userId: data.userId,
                     streamId: data.songId,
                 },
             });
+            // downvote it
             if (user) {
-                ws.send(JSON.stringify(JSON.stringify({
-                    type: "already voted",
-                })));
+                yield prisma_1.default.upvote.deleteMany({
+                    where: {
+                        userId: data.userId,
+                        streamId: data.songId,
+                    },
+                });
+                yield this.broadcastToRoom(streamId);
                 return;
             }
+            // upvote it
             yield prisma_1.default.upvote.create({
                 data: {
-                    userId: userId,
+                    userId: data.userId,
                     streamId: data.songId,
                 },
             });
             yield this.broadcastToRoom(streamId);
         });
     }
-    downVoteSong(userId, streamId, data, ws) {
+    leaveRoom(streamId, data, ws) {
         return __awaiter(this, void 0, void 0, function* () {
             const room = this.rooms.get(streamId);
             if (!room)
-                return;
-            const user = yield prisma_1.default.upvote.findFirst({
-                where: {
-                    userId: userId,
-                    streamId: data.songId,
-                },
+                throw new Error("room not exists");
+            ws.on("disconnect", () => {
+                room.users = room.users.filter((user) => user.userId !== data.userId);
+                if (room.users.length === 0) {
+                    this.rooms.delete(streamId);
+                }
             });
-            if (!user) {
-                ws.send(JSON.stringify(JSON.stringify({
-                    type: "not voted yet",
-                })));
-                return;
-            }
-            yield prisma_1.default.upvote.deleteMany({
-                where: {
-                    userId: userId,
-                    streamId: data.songId,
-                },
-            });
-            yield this.broadcastToRoom(streamId);
-        });
-    }
-    leaveRoom(streamsId, data, ws) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const room = this.rooms.get(streamsId);
-            if (!room)
-                return;
-            room.users = room.users.filter((user) => user.ws !== ws);
-            if (room.users.length === 0) {
-                this.rooms.delete(streamsId);
-            }
         });
     }
     broadcastToRoom(streamId) {
@@ -179,6 +142,14 @@ class RoomManager {
                 return;
             const songs = yield prisma_1.default.stream.findMany({
                 where: { userId: streamId },
+                include: {
+                    upvotes: {
+                        select: {
+                            userId: true,
+                        },
+                    },
+                    _count: true,
+                },
             });
             console.log("Broadcasting songs to room:", streamId);
             // Prepare the data to send to each client

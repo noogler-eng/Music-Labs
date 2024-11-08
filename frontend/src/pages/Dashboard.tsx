@@ -13,18 +13,18 @@ export default function Dashboard() {
   const user = useRecoilValue(userAtom);
   const [newSongUrl, setSongUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [socket, setSocket] = useState<Socket>();
-  const [queue, setQueue] = useState<any>();
-  const [longQueue, setLongQueue] = useState();
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [queue, setQueue] = useState<any>(null);
+  const [longQueue, setLongQueue] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
       navigate("/");
     }
-  }, []);
+  }, [user, navigate]);
 
-  const handelAddSong = (e: any) => {
+  const handleAddSong = (e: any) => {
     e.preventDefault();
     setLoading(true);
     try {
@@ -39,39 +39,54 @@ export default function Dashboard() {
     setLoading(false);
   };
 
+  const handelSkipSong = async () => {
+    console.log("skipping the current song!");
+    socket?.emit("message", {
+      type: "delete_song",
+      id: queue.id,
+      streamId: user?.id,
+    });
+  };
+
   useEffect(() => {
     if (!socket) {
-      const socket: Socket = io("ws://localhost:3000");
-      setSocket(socket);
+      const newSocket: Socket = io("ws://localhost:3000");
+      setSocket(newSocket);
+      console.log("Socket initialized:", newSocket);
 
-      // all the function of the web sockets
-      socket.on("connect", () => {
-        socket.emit("message", {
+      newSocket.on("connect", () => {
+        newSocket.emit("message", {
           type: "init_room",
           streamId: user?.id,
           userId: user?.id,
         });
       });
 
-      socket.on("songs", (data) => {
-        console.log(data);
-        setQueue(JSON.parse(data).currentSong);
-        setLongQueue(JSON.parse(data).queueSongs);
+      newSocket.on("songs", (data) => {
+        const parsedData = JSON.parse(data);
+        setQueue(parsedData.currentSong);
+        const songsWithUpvotesArray = parsedData.queueSongs.map(
+          (song: any) => ({
+            ...song,
+            upvotes: song.upvotes.map((upvote: any) => upvote.userId),
+          })
+        );
+        setLongQueue(songsWithUpvotesArray);
       });
 
-      socket.on("error", (data) => {
-        console.log(data);
+      newSocket.on("error", (data) => {
+        console.log("Error:", data);
         setQueue(null);
       });
 
       return () => {
-        socket.disconnect();
+        newSocket.disconnect();
+        console.log("Socket disconnected");
       };
     }
-  }, [socket, user]);
+  }, [user]);
 
-  console.log("currentSong: ", queue);
-  console.log("longQueues:", longQueue);
+  console.log(longQueue);
 
   return (
     <div className="min-h-screen w-full flex flex-col">
@@ -80,14 +95,14 @@ export default function Dashboard() {
         <div className="w-1/4 flex-grow p-4"></div>
         <div className="w-2/4 flex-grow p-4">
           <div className="flex flex-col items-center justify-center w-full">
-            <h2 className="place-self-start text-3xl mb-1">Song </h2>
+            <h2 className="place-self-start text-3xl mb-1">Song</h2>
             {queue && <SongPlayer currentSong={queue} socket={socket} />}
-            <h2 className="place-self-start mt-4 mb-1 text-3xl">Song Queue </h2>
-            {longQueue && <SongsList longQueue={longQueue} />}
+            <h2 className="place-self-start mt-4 mb-1 text-3xl">Song Queue</h2>
+            {longQueue && <SongsList longQueue={longQueue} socket={socket} />}
           </div>
         </div>
         <div className="w-1/4 flex flex-grow flex-col gap-2 p-4">
-          <form onSubmit={handelAddSong}>
+          <form onSubmit={handleAddSong} className="flex flex-col gap-2">
             <h2 className="place-self-start text-3xl mb-1">Add Song</h2>
             <Input
               type="text"
@@ -107,6 +122,11 @@ export default function Dashboard() {
               Add Song
             </Button>
           </form>
+          {longQueue.length > 0 && (
+            <Button color="primary" className="w-full" onClick={handelSkipSong}>
+              next Song
+            </Button>
+          )}
         </div>
       </div>
     </div>

@@ -11,6 +11,7 @@ export default function SongPlayer({
   socket: any;
 }) {
   const user = useRecoilValue(userAtom);
+  console.log(socket)
 
   const handleEndSong = () => {
     socket.emit("message", {
