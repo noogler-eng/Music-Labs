@@ -21,7 +21,6 @@ export default function Signup() {
   const handelSignup = async (e: any) => {
     e.preventDefault();
     setLoading(true);
-
     if (!data.image) throw new Error("there must be an image");
     try {
       let imageUrl = "";
@@ -30,7 +29,7 @@ export default function Signup() {
       formData.append("upload_preset", "payment");
 
       const response = await axios.post(
-        import.meta.env.VITE_APP_ClOUDINARY_API,
+        import.meta.env.VITE_ClOUDINARY_API,
         formData
       );
       imageUrl = await response.data.secure_url;
@@ -43,7 +42,7 @@ export default function Signup() {
       });
       navigate("/");
     } catch (error) {
-      console.log("error while singin: ", error);
+      console.log("error while singup: ", error);
     }
     setLoading(false);
   };

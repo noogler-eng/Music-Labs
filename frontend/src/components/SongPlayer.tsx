@@ -1,23 +1,20 @@
 import ReactPlayer from "react-player";
 import { Card, CardHeader, CardBody, Image } from "@nextui-org/react";
-import { useRecoilValue } from "recoil";
-import userAtom from "../../store/user/userAtom";
 
 export default function SongPlayer({
   currentSong,
   socket,
+  streamId,
 }: {
   currentSong: any;
   socket: any;
+  streamId: string;
 }) {
-  const user = useRecoilValue(userAtom);
-  console.log(socket)
-
   const handleEndSong = () => {
     socket.emit("message", {
       type: "delete_song",
       id: currentSong.id,
-      streamId: user?.id,
+      streamId: streamId,
     });
   };
 
@@ -39,12 +36,13 @@ export default function SongPlayer({
         </CardBody>
       </Card>
       <ReactPlayer
+        key={currentSong.id}
         url={currentSong.url}
         playing={true}
         onEnded={handleEndSong}
         controls={false}
-        width="0px"
-        height="0px"
+        width="0"
+        height="0"
         config={{
           youtube: {
             playerVars: { controls: 0 },

@@ -65,7 +65,10 @@ class RoomManager {
     const isSuccess = dataZod.safeParse(data);
     const extractedId = isSuccess.data?.url.split("?v=")[1];
     const isValidYTUrl: any = isSuccess.data?.url.match(YT_REGEX);
-    if (!isValidYTUrl) throw new Error("Invalid url");
+    if (!isValidYTUrl) {
+      this.broadcastToRoom(streamId);
+      return;
+    }
 
     const videoData = await youtubesearchapi.GetVideoDetails(extractedId);
     const length = videoData.thumbnail.thumbnails.length;
@@ -155,7 +158,16 @@ class RoomManager {
             userId: true,
           },
         },
-        _count: true,
+        _count: {
+          select: {
+            upvotes: true,
+          },
+        },
+      },
+      orderBy: {
+        upvotes: {
+          _count: "desc",
+        },
       },
     });
 

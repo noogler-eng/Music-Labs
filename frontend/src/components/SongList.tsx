@@ -8,9 +8,11 @@ import { Socket } from "socket.io-client";
 export default function SongsList({
   longQueue,
   socket,
+  streamId,
 }: {
   longQueue: any;
   socket: Socket | null;
+  streamId: string;
 }) {
   const [loading, setLoading] = useState<boolean>(false);
   const user = useRecoilValue(userAtom);
@@ -22,7 +24,7 @@ export default function SongsList({
         type: "vote_song",
         songId: id,
         userId: user?.id,
-        streamId: user?.id,
+        streamId: streamId,
       });
     } catch (error) {
       console.log(error);

@@ -59,8 +59,10 @@ class RoomManager {
             const isSuccess = dataZod.safeParse(data);
             const extractedId = (_a = isSuccess.data) === null || _a === void 0 ? void 0 : _a.url.split("?v=")[1];
             const isValidYTUrl = (_b = isSuccess.data) === null || _b === void 0 ? void 0 : _b.url.match(YT_REGEX);
-            if (!isValidYTUrl)
-                throw new Error("Invalid url");
+            if (!isValidYTUrl) {
+                this.broadcastToRoom(streamId);
+                return;
+            }
             const videoData = yield youtube_search_api_1.default.GetVideoDetails(extractedId);
             const length = videoData.thumbnail.thumbnails.length;
             yield prisma_1.default.stream.create({
@@ -148,7 +150,16 @@ class RoomManager {
                             userId: true,
                         },
                     },
-                    _count: true,
+                    _count: {
+                        select: {
+                            upvotes: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    upvotes: {
+                        _count: "desc",
+                    },
                 },
             });
             console.log("Broadcasting songs to room:", streamId);

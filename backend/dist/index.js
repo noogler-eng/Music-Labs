@@ -60,7 +60,10 @@ function handelIncommingUser(data, ws) {
         roomManager.deleteSong(data.streamId, { id: data.id });
     }
     else if (data.type == "vote_song") {
-        roomManager.voteSong(data.streamId, { userId: data.userId, songId: data.songId });
+        roomManager.voteSong(data.streamId, {
+            userId: data.userId,
+            songId: data.songId,
+        });
     }
     else {
         console.log("leave_room");

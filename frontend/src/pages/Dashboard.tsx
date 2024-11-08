@@ -86,19 +86,29 @@ export default function Dashboard() {
     }
   }, [user]);
 
-  console.log(longQueue);
-
   return (
     <div className="min-h-screen w-full flex flex-col">
       <Navbar />
       <div className="flex justify-center flex-grow p-10">
-        <div className="w-1/4 flex-grow p-4"></div>
+        <div className="w-1/4 flex-grow p-4 bg-[url('dashHero.webp')] bg-clip-content bg-origin-content bg-center bg-no-repeat bg-cover"></div>
         <div className="w-2/4 flex-grow p-4">
           <div className="flex flex-col items-center justify-center w-full">
             <h2 className="place-self-start text-3xl mb-1">Song</h2>
-            {queue && <SongPlayer currentSong={queue} socket={socket} />}
+            {queue && (
+              <SongPlayer
+                currentSong={queue}
+                socket={socket}
+                streamId={user?.id || ""}
+              />
+            )}
             <h2 className="place-self-start mt-4 mb-1 text-3xl">Song Queue</h2>
-            {longQueue && <SongsList longQueue={longQueue} socket={socket} />}
+            {longQueue && (
+              <SongsList
+                longQueue={longQueue}
+                socket={socket}
+                streamId={user?.id || ""}
+              />
+            )}
           </div>
         </div>
         <div className="w-1/4 flex flex-grow flex-col gap-2 p-4">
@@ -122,7 +132,7 @@ export default function Dashboard() {
               Add Song
             </Button>
           </form>
-          {longQueue.length > 0 && (
+          {(longQueue.length > 0 || queue) && (
             <Button color="primary" className="w-full" onClick={handelSkipSong}>
               next Song
             </Button>
