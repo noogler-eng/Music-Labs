@@ -3,7 +3,6 @@ import prisma from "./db/prisma";
 import zod from "zod";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
-const cloudinary = require("cloudinary").v2;
 
 const signUpData = zod.object({
   name: zod.string(),
@@ -18,8 +17,8 @@ const signInData = zod.object({
 });
 
 const authRouter = express.Router();
-authRouter.post("/signup", async (req, res) => {
-  const body = await req.body;
+authRouter.post("/signup", async (req: any, res: any) => {
+  const body: any = await req.body;
   try {
     const isValidIncommingData = signUpData.safeParse(body);
     if (!isValidIncommingData.success) {
@@ -65,7 +64,7 @@ authRouter.post("/signup", async (req, res) => {
   }
 });
 
-authRouter.post("/signin", async (req, res) => {
+authRouter.post("/signin", async (req: any, res: any) => {
   const body = await req.body;
   try {
     const isValidInCommingData = signInData.safeParse(body);
@@ -114,7 +113,7 @@ authRouter.post("/signin", async (req, res) => {
 
 // simply it will getUser and store them in recoil state varibale
 // it will decode the obtained
-authRouter.get("/getUser", async (req, res) => {
+authRouter.get("/getUser", async (req: any, res: any) => {
   const token: any = await req.headers.authorization;
   try {
     const dataDecoded: JwtPayload | string = await jwt.verify(token.split(" ")[1], "sharad");
