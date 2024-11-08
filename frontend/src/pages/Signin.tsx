@@ -33,7 +33,7 @@ export default function Signin() {
 
   return (
     <div className="flex min-h-screen w-full">
-      <div className="w-2/6 min-h-screen bg-[url('Young_handsome_man.webp')] bg-clip-content bg-origin-content bg-center bg-no-repeat bg-cover"></div>
+      <div className="w-2/6 min-h-screen bg-[url('Young_handsome_man.jpg')] bg-clip-content bg-origin-content bg-center bg-no-repeat bg-cover"></div>
       <div className="w-4/6 flex flex-col">
         <div className="flex justify-between px-4 py-4 w-full">
           <h2 className="text-3xl">Music-Labs</h2>

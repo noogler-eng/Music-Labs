@@ -86,7 +86,7 @@ export default function Stream() {
     <div className="min-h-screen w-full flex flex-col">
       <Navbar />
       <div className="flex justify-center flex-grow p-10">
-        <div className="w-1/4 flex-grow p-4 bg-[url('dashHero.webp')] bg-clip-content bg-origin-content bg-center bg-no-repeat bg-cover"></div>
+        <div className="w-1/4 flex-grow p-4 bg-[url('dashHero.jpg')] bg-clip-content bg-origin-content bg-center bg-no-repeat bg-cover"></div>
         <div className="w-2/4 flex-grow p-4">
           <div className="flex flex-col items-center justify-center w-full">
             <h2 className="place-self-start text-3xl mb-1">Song</h2>
