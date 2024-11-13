@@ -5,6 +5,7 @@ import Navbar from "../components/Navbar";
 import { useEffect, useState } from "react";
 import { Input } from "@nextui-org/react";
 import { Button } from "@nextui-org/react";
+import { Image } from "@nextui-org/react";
 import axios from "axios";
 
 export default function Home() {
@@ -41,6 +42,26 @@ export default function Home() {
     handelUserData();
   }, []);
 
+  const images = [
+    "4.jpg",
+    "5.jpg",
+    "6.jpg",
+    "8.jpg",
+  ];
+  const imageArr = images.map((imageUrl, index) => {
+    return (
+      <div>
+        <Image
+          key={index}
+          isZoomed
+          width={'280'}
+          alt="loading..."
+          src={imageUrl}
+        />
+      </div>
+    );
+  });
+
   return (
     <div className="w-full min-h-screen flex flex-col">
       <Navbar />
@@ -71,6 +92,11 @@ export default function Home() {
                 StreamIt
               </Button>
             </form>
+          </div>
+        )}
+        {!user && (
+          <div className="w-5/6 flex flex-wrap items-center justify-center gap-1">
+            {imageArr}
           </div>
         )}
         <div className="flex w-1/2 flex-wrap md:flex-nowrap gap-4">
