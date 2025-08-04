@@ -15,9 +15,9 @@ export default function Navbar() {
         <Link to={"/about"} className="hover:underline text-sm underline">
           About
         </Link>
-        <Link to={"/"} className="hover:underline text-sm underline">
+        {<Link to={"/"} className="hover:underline text-sm underline">
           Home
-        </Link>
+        </Link>}
 
         {user && user.imageUrl && (
           <Avatar isBordered color="success" src={user.imageUrl} />
