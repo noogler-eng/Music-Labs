@@ -3,7 +3,6 @@ import { Card, CardHeader, CardBody, Image, Button } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import userAtom from "../../store/user/userAtom";
-import YouTube from "react-youtube";
 
 export default function SongPlayer({
   currentSong,
