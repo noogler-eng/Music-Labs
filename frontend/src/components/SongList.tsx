@@ -1,5 +1,4 @@
-import { Card, CardHeader, Image } from "@nextui-org/react";
-import { Button } from "@nextui-org/react";
+import { Card, CardHeader, Image, Button } from "@nextui-org/react";
 import { useState } from "react";
 import { useRecoilValue } from "recoil";
 import userAtom from "../../store/user/userAtom";
@@ -14,61 +13,71 @@ export default function SongsList({
   socket: Socket | null;
   streamId: string;
 }) {
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
   const user = useRecoilValue(userAtom);
 
-  const handelVote = async (id: string) => {
+  const handleVote = async (id: string) => {
     setLoading(true);
     try {
       socket?.emit("message", {
         type: "vote_song",
         songId: id,
         userId: user?.id,
-        streamId: streamId,
+        streamId,
       });
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      console.error("Vote error:", err);
     }
     setLoading(false);
   };
 
-  const songs = longQueue.map((song: any, index: any) => {
-    return (
-      <div key={index} className="w-full">
-        <Card className="w-full">
-          <CardHeader className="flex justify-between">
-            <div className="flex gap-3">
-              <Image
-                alt="nextui logo"
-                height={40}
-                radius="sm"
-                src={song.bigImg}
-                width={100}
-              />
-              <div className="flex flex-col">
-                <p className="text-md">{song.title.slice(0, 40)}</p>
-                <p className="text-small text-default-500">{"YOUTUBE"}</p>
-              </div>
-            </div>
-            <div>
-              <Button
-                color="primary"
-                isLoading={loading}
-                onClick={() => handelVote(song.id)}
-              >
-                {song?.upvotes?.includes(user?.id) ? "downvote" : "upvote"}{" "}
-                {song?._count?.upvotes || 0}
-              </Button>
-            </div>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  });
-
   return (
-    <div className="w-full flex flex-col gap-2 overflow-y-auto h-64">
-      {songs}
+    <div className="w-full flex flex-col gap-3 h-64 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+      {longQueue.map((song: any, index: number) => {
+        const isUpvoted = song?.upvotes?.includes(user?.id);
+        const voteCount = song?._count?.upvotes || 0;
+
+        return (
+          <Card
+            key={index}
+            className="bg-gray-900 text-white border border-gray-800 shadow-md"
+          >
+            <CardHeader className="flex justify-between items-center p-3">
+              {/* Left: Thumbnail + Title */}
+              <div className="flex items-center gap-3">
+                <Image
+                  src={song.bigImg}
+                  alt={song.title}
+                  width={80}
+                  height={60}
+                  radius="sm"
+                  className="object-cover"
+                />
+                <div className="flex flex-col">
+                  <h4 className="text-md font-semibold truncate w-44">
+                    {song.title}
+                  </h4>
+                  <p className="text-xs text-gray-400">YouTube</p>
+                </div>
+              </div>
+
+              {/* Right: Vote Button */}
+              <Button
+                isLoading={loading}
+                size="sm"
+                className={`text-white font-semibold px-4 py-1 ${
+                  isUpvoted
+                    ? "bg-red-700 hover:bg-red-600"
+                    : "bg-green-700 hover:bg-green-600"
+                }`}
+                onClick={() => handleVote(song.id)}
+              >
+                {isUpvoted ? "Downvote" : "Upvote"} ({voteCount})
+              </Button>
+            </CardHeader>
+          </Card>
+        );
+      })}
     </div>
   );
 }

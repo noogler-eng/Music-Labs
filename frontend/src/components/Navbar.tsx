@@ -10,8 +10,8 @@ export default function Navbar() {
 
   return (
     <div className="flex justify-between px-4 py-4 items-center">
-      <div className="text-3xl">Music-Labs</div>
-      <div className="flex gap-3 items-center">
+      <div className="text-3xl text-gray-400">Music-Labs</div>
+      <div className="flex gap-3 items-center text-gray-400">
         <Link to={"/about"} className="hover:underline text-sm underline">
           About
         </Link>

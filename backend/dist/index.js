@@ -18,6 +18,8 @@ const http_1 = require("http");
 const cors_1 = __importDefault(require("cors"));
 const room_1 = __importDefault(require("./room"));
 const authRoutes_1 = __importDefault(require("./authRoutes"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
@@ -70,6 +72,7 @@ function handelIncommingUser(data, ws) {
         roomManager.leaveRoom(data.streamsId, data, ws);
     }
 }
-server.listen(3000, () => {
-    console.log("server running at http://localhost:3000");
+const port = process.env.PORT || 3000;
+server.listen(port, () => {
+    console.log("server running at: ", port);
 });
