@@ -17,7 +17,6 @@ const prisma_1 = __importDefault(require("./db/prisma"));
 const zod_1 = __importDefault(require("zod"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const cloudinary = require("cloudinary").v2;
 const signUpData = zod_1.default.object({
     name: zod_1.default.string(),
     email: zod_1.default.string(),

@@ -1,77 +1,152 @@
-import { Input } from "@nextui-org/react";
-import { Link } from "react-router-dom";
-import { Button } from "@nextui-org/react";
-import { useNavigate } from "react-router-dom";
+import { Input, Button } from "@nextui-org/react";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
+import { motion } from "framer-motion";
+import { AlertCircle, Sparkles } from "lucide-react";
 
 export default function Signin() {
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState({
-    email: "",
-    password: "",
-  });
+  const [data, setData] = useState({ email: "", password: "" });
+  const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
-  const handelSignin = async (e: any) => {
+
+  const handleSignin = async (e: any) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg("");
     try {
       if (!data.email || !data.password) throw new Error("Unfilled Details!");
-      const res = await axios.post(`${import.meta.env.VITE_SERVER}/signin`, data);
+      const res = await axios.post(
+        `${import.meta.env.VITE_SERVER}/signin`,
+        data
+      );
       const token = res.data.token;
       localStorage.setItem("token", `Bearer ${token}`);
       navigate("/");
-    } catch (error) {
-      console.log("error while singin: ", error);
-      setData({
-        email: "",
-        password: "",
-      });
+    } catch (error: any) {
+      console.error("Error while signin:", error);
+      setErrorMsg(
+        "⚠️ Unable to sign in. If this keeps happening, our free server might be offline temporarily."
+      );
+      setData({ email: "", password: "" });
     }
     setLoading(false);
   };
 
   return (
-    <div className="flex min-h-screen w-full">
-      <div className="w-2/6 min-h-screen bg-[url('Young_handsome_man.jpg')] bg-clip-content bg-origin-content bg-center bg-no-repeat bg-cover"></div>
-      <div className="w-4/6 flex flex-col">
-        <div className="flex justify-between px-4 py-4 w-full">
-          <h2 className="text-3xl">Music-Labs</h2>
-          <Link to={"/"}>Home</Link>
+    <div className="flex min-h-screen bg-black text-white">
+      {/* Left Side Image */}
+      <div
+        className="w-1/2 hidden md:block bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('Young_handsome_man.jpg')" }}
+      >
+        <div className="w-full h-full bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      </div>
+
+      {/* Right Side Form */}
+      <div className="w-full md:w-1/2 flex flex-col px-8 py-12 justify-between relative">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-2xl font-bold text-white"
+          >
+            <Sparkles className="h-6 w-6 text-violet-400 animate-pulse" />
+            <span className="bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
+              MusicLabs
+            </span>
+          </Link>
         </div>
-        <div className="flex flex-col items-center justify-center flex-grow gap-3">
-          <h3 className="text-2xl">Sign In</h3>
-          <form className="flex flex-col gap-2 w-1/2" onSubmit={handelSignin}>
+
+        {/* Form Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="flex flex-col items-center justify-center flex-grow"
+        >
+          <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+            Welcome Back
+          </h2>
+          <p className="text-gray-400 mb-8 text-sm">
+            Sign in to continue your music journey 🎶
+          </p>
+
+          {/* Error / Warning Banner */}
+          {errorMsg && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="w-full max-w-md mb-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-red-900/30 border border-red-600/40 text-red-300 text-sm"
+            >
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{errorMsg}</span>
+            </motion.div>
+          )}
+
+          {/* Sign In Form */}
+          <form
+            onSubmit={handleSignin}
+            className="w-full max-w-md space-y-4 bg-gradient-to-br from-gray-900/70 to-gray-950/80 p-8 rounded-2xl border border-gray-800 shadow-lg shadow-purple-900/30"
+          >
             <Input
               type="email"
-              variant="flat"
-              label="Email"
-              onChange={(e) => setData({ ...data, email: e.target.value })}
+              placeholder="Enter your email"
               value={data.email}
+              onChange={(e) => setData({ ...data, email: e.target.value })}
+              classNames={{
+                inputWrapper:
+                  "bg-gray-900 border border-gray-700 rounded-lg shadow-sm",
+                input: "text-white",
+                label: "text-gray-400",
+              }}
+              isRequired
             />
             <Input
               type="password"
-              variant="flat"
-              label="Password"
-              onChange={(e) => setData({ ...data, password: e.target.value })}
+              placeholder="••••••••"
               value={data.password}
+              onChange={(e) => setData({ ...data, password: e.target.value })}
+              classNames={{
+                inputWrapper:
+                  "bg-gray-900 border border-gray-700 rounded-lg shadow-sm",
+                input: "text-white",
+                label: "text-gray-400",
+              }}
+              isRequired
             />
             <Button
-              color="primary"
-              isLoading={loading}
               type="submit"
-              className="w-full"
+              isLoading={loading}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold rounded-lg shadow-lg"
             >
-              singin
+              Sign In
             </Button>
           </form>
-          <div>
-            If you don't have an account? Create a new one{" "}
-            <Link to={"/signup"} className="text-red-400">
-              Sign Up!
+
+          <p className="mt-6 text-sm text-gray-400">
+            Don't have an account?{" "}
+            <Link
+              to="/signup"
+              className="text-purple-400 underline hover:text-purple-300"
+            >
+              Sign Up
             </Link>
-          </div>
-        </div>
+          </p>
+        </motion.div>
+
+        {/* Footer */}
+        <motion.footer
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          className="mt-12 text-center text-gray-600 text-xs"
+        >
+          © {new Date().getFullYear()}{" "}
+          <span className="text-violet-400 font-semibold">MusicLabs</span>. All
+          rights reserved.
+        </motion.footer>
       </div>
     </div>
   );

@@ -52,7 +52,7 @@ class RoomManager {
     }
     addSong(streamId, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d;
+            var _a, _b, _c, _d, _e, _f, _g, _h;
             const room = this.rooms.get(streamId);
             if (!room)
                 return;
@@ -63,17 +63,19 @@ class RoomManager {
                 this.broadcastToRoom(streamId);
                 return;
             }
+            console.log(extractedId);
             const videoData = yield youtube_search_api_1.default.GetVideoDetails(extractedId);
-            const length = videoData.thumbnail.thumbnails.length;
+            console.log(videoData);
+            const length = (_d = (_c = videoData === null || videoData === void 0 ? void 0 : videoData.thumbnail) === null || _c === void 0 ? void 0 : _c.thumbnails) === null || _d === void 0 ? void 0 : _d.length;
             yield prisma_1.default.stream.create({
                 data: {
                     userId: streamId,
-                    type: ((_c = isSuccess.data) === null || _c === void 0 ? void 0 : _c.url.includes("spotify")) ? "SPOTIFY" : "YOUTUBE",
+                    type: ((_e = isSuccess.data) === null || _e === void 0 ? void 0 : _e.url.includes("spotify")) ? "SPOTIFY" : "YOUTUBE",
                     title: (videoData === null || videoData === void 0 ? void 0 : videoData.title) || "",
-                    url: ((_d = isSuccess.data) === null || _d === void 0 ? void 0 : _d.url) || "",
+                    url: ((_f = isSuccess.data) === null || _f === void 0 ? void 0 : _f.url) || "",
                     extractedId: extractedId || "",
-                    smallImg: videoData.thumbnail.thumbnails[length - 2].url || "",
-                    bigImg: videoData.thumbnail.thumbnails[length - 1].url || "",
+                    smallImg: ((_g = videoData === null || videoData === void 0 ? void 0 : videoData.thumbnail) === null || _g === void 0 ? void 0 : _g.thumbnails[length - 2].url) || "",
+                    bigImg: ((_h = videoData === null || videoData === void 0 ? void 0 : videoData.thumbnail) === null || _h === void 0 ? void 0 : _h.thumbnails[length - 1].url) || "",
                 },
             });
             yield this.broadcastToRoom(streamId);
