@@ -2,7 +2,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import userAtom from "../../store/user/userAtom";
 import Navbar from "../components/Navbar";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
@@ -10,49 +10,19 @@ import { motion } from "framer-motion";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { MagicCard } from "@/components/magicui/magic-card";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
-import axios from "axios";
-import {
-  Zap,
-  Vote,
-  Shield,
-  Clock,
-  Palette,
-  Rocket,
-} from "lucide-react";
+import { Zap, Vote, Shield, Clock, Palette, Rocket } from "lucide-react";
 import Footer from "@/components/Footer";
 
 export default function Home() {
   const navigate = useNavigate();
   const [streamerId, setStreamerId] = useState("");
+  // @ts-ignore
   const [user, setUser] = useRecoilState(userAtom);
 
   const handleStreams = (e: any) => {
     e.preventDefault();
     navigate(`/streams/${streamerId}`);
   };
-
-  const handleUserData = async () => {
-    try {
-      const res = await axios.get(`${import.meta.env.VITE_SERVER}/getUser`, {
-        headers: {
-          Authorization: localStorage.getItem("token") || "",
-        },
-      });
-      const userData = res.data.user;
-      setUser({
-        id: userData.id,
-        name: userData.name,
-        imageUrl: userData.imageUrl,
-      });
-    } catch (error) {
-      setUser(null);
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
-    handleUserData();
-  }, []);
 
   const images = ["4.jpg", "5.jpg", "6.jpg", "8.jpg"];
 

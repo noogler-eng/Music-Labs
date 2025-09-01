@@ -11,6 +11,7 @@ import SongPlayer from "../components/SongPlayer";
 import SongsList from "../components/SongList";
 import { Music, Plus, Users, Radio, Headphones, Zap } from "lucide-react";
 import StreamInfo from "@/components/StreamInfo";
+import Loading from "@/components/Loading";
 
 export default function Stream() {
   const user = useRecoilValue(userAtom);
@@ -78,6 +79,8 @@ export default function Stream() {
       return () => newSocket.disconnect();
     }
   }, [user, id]);
+
+  if (user?.loading) return <Loading />;
 
   return (
     <div className="min-h-screen w-full bg-black text-purple-100 flex flex-col">

@@ -4,12 +4,37 @@ import { useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { AlertCircle, Sparkles } from "lucide-react";
+import { useRecoilState } from "recoil";
+import userAtom from "../../store/user/userAtom";
 
 export default function Signin() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState({ email: "", password: "" });
   const [errorMsg, setErrorMsg] = useState("");
+  const [user, setUser] = useRecoilState(userAtom);
   const navigate = useNavigate();
+
+  console.log(user);
+
+  const handleUserData = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_SERVER}/getUser`, {
+        headers: {
+          Authorization: localStorage.getItem("token") || "",
+        },
+      });
+      const userData = res.data.user;
+      setUser({
+        id: userData.id,
+        name: userData.name,
+        imageUrl: userData.imageUrl,
+        loading: false,
+      });
+    } catch (error) {
+      setUser(null);
+      console.error(error);
+    }
+  };
 
   const handleSignin = async (e: any) => {
     e.preventDefault();
@@ -23,6 +48,7 @@ export default function Signin() {
       );
       const token = res.data.token;
       localStorage.setItem("token", `Bearer ${token}`);
+      handleUserData();
       navigate("/");
     } catch (error: any) {
       console.error("Error while signin:", error);

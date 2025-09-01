@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { io, type Socket } from "socket.io-client";
 import userAtom from "../../store/user/userAtom";
-import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { Input, Button, Code } from "@nextui-org/react";
 import SongPlayer from "../components/SongPlayer";
@@ -20,6 +19,7 @@ import {
   Activity,
 } from "lucide-react";
 import StreamInfo from "@/components/StreamInfo";
+import Loading from "@/components/Loading";
 
 export default function Dashboard() {
   const user = useRecoilValue(userAtom);
@@ -29,14 +29,8 @@ export default function Dashboard() {
   const [queue, setQueue] = useState<any>(null);
   const [longQueue, setLongQueue] = useState([]);
   const urlRef = useRef(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!user) navigate("/");
-  }, [user, navigate]);
 
   // this function is for adding new song in queue
-  //
   const handleAddSong = (e: any) => {
     e.preventDefault();
     setLoading(true);
@@ -105,6 +99,8 @@ export default function Dashboard() {
       navigator.clipboard.writeText(urlRef.current?.innerText);
     }
   };
+
+  if (user?.loading) return <Loading />;
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-950 to-black text-white relative overflow-hidden">
