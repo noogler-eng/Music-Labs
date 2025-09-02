@@ -61,13 +61,13 @@ export default function SongsList({
                     <img
                       alt={song?.title}
                       src={song?.bigImg}
-                      className="rounded-xl object-cover w-full max-h-72 shadow-lg"
+                      className="rounded-xl object-cover shadow-lg"
                     />
                   ) : (
                     <img
                       alt={song?.title}
                       src={"./rainbow-icon.svg"}
-                      className="rounded-xl object-cover w-full max-h-72 shadow-lg"
+                      className="rounded-xl object-cover shadow-lg"
                     />
                   )}
                   <div className="flex flex-col max-w-[200px]">
