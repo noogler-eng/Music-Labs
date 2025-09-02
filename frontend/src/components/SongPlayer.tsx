@@ -79,7 +79,7 @@ export default function SongPlayer({
           ) : (
             <img
               alt={currentSong?.title}
-              src={"./rainbow-icon.svg"}
+              src={"rainbow-icon.svg"}
               className="rounded-xl object-cover w-full max-h-72 shadow-lg"
             />
           )}

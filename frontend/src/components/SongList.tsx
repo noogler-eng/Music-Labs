@@ -67,7 +67,7 @@ export default function SongsList({
                   ) : (
                     <img
                       alt={song?.title}
-                      src={"./rainbow-icon.svg"}
+                      src={"rainbow-icon.svg"}
                       className="rounded-xl object-cover shadow-lg"
                       width={60}
                     />
