@@ -61,37 +61,35 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (!socket) {
-      const newSocket: Socket = io(import.meta.env.VITE_SOCKET_SERVER);
-      setSocket(newSocket);
+    const newSocket: Socket = io(import.meta.env.VITE_SOCKET_SERVER);
+    setSocket(newSocket);
 
-      newSocket.on("connect", () => {
-        newSocket.emit("message", {
-          type: "init_room",
-          streamId: user?.id,
-          userId: user?.id,
-        });
+    newSocket.on("connect", () => {
+      newSocket.emit("message", {
+        type: "init_room",
+        streamId: user?.id,
+        userId: user?.id,
       });
+    });
 
-      newSocket.on("songs", (data) => {
-        const parsedData = JSON.parse(data);
-        setQueue(parsedData.currentSong);
-        const songsWithUpvotes = parsedData.queueSongs.map((song: any) => ({
-          ...song,
-          upvotes: song.upvotes.map((upvote: any) => upvote.userId),
-        }));
-        setLongQueue(songsWithUpvotes);
-      });
+    newSocket.on("songs", (data) => {
+      const parsedData = JSON.parse(data);
+      setQueue(parsedData.currentSong);
+      const songsWithUpvotes = parsedData.queueSongs.map((song: any) => ({
+        ...song,
+        upvotes: song.upvotes.map((upvote: any) => upvote.userId),
+      }));
+      setLongQueue(songsWithUpvotes);
+    });
 
-      newSocket.on("error", () => {
-        setQueue(null);
-      });
+    newSocket.on("error", () => {
+      setQueue(null);
+    });
 
-      return () => {
-        newSocket.disconnect();
-      };
-    }
-  }, [user]);
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [user?.id]);
 
   const handleCopy = () => {
     if (urlRef.current) {

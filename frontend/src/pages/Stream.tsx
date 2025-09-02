@@ -50,34 +50,30 @@ export default function Stream() {
 
   // @ts-ignore
   useEffect(() => {
-    if (!socket) {
-      const newSocket: Socket = io(import.meta.env.VITE_SOCKET_SERVER);
-      setSocket(newSocket);
+    const newSocket: Socket = io(import.meta.env.VITE_SOCKET_SERVER);
+    setSocket(newSocket);
 
-      newSocket.on("connect", () => {
-        newSocket.emit("message", {
-          type: "init_room",
-          streamId: id,
-          userId: user?.id,
-        });
+    newSocket.on("connect", () => {
+      newSocket.emit("message", {
+        type: "init_room",
+        streamId: id,
+        userId: user?.id,
       });
+    });
 
-      newSocket.on("songs", (data) => {
-        const parsedData = JSON.parse(data);
-        setQueue(parsedData.currentSong);
-        const songsWithUpvotesArray = parsedData.queueSongs.map(
-          (song: any) => ({
-            ...song,
-            upvotes: song.upvotes.map((upvote: any) => upvote.userId),
-          })
-        );
-        setLongQueue(songsWithUpvotesArray);
-      });
+    newSocket.on("songs", (data) => {
+      const parsedData = JSON.parse(data);
+      setQueue(parsedData.currentSong);
+      const songsWithUpvotesArray = parsedData.queueSongs.map((song: any) => ({
+        ...song,
+        upvotes: song.upvotes.map((upvote: any) => upvote.userId),
+      }));
+      setLongQueue(songsWithUpvotesArray);
+    });
 
-      newSocket.on("error", () => setQueue(null));
+    newSocket.on("error", () => setQueue(null));
 
-      return () => newSocket.disconnect();
-    }
+    return () => newSocket.disconnect();
   }, [user, id]);
 
   if (user?.loading) return <Loading />;

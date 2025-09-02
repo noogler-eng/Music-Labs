@@ -57,13 +57,19 @@ export default function SongsList({
               <CardHeader className="flex justify-between items-center p-3">
                 {/* Left: Thumbnail + Info */}
                 <div className="flex items-center gap-3">
-                  <img
-                    src={song.bigImg}
-                    alt={song.title}
-                    width={70}
-                    height={70}
-                    className="object-cover rounded-md shadow-md"
-                  />
+                  {song?.bigImg ? (
+                    <img
+                      alt={song?.title}
+                      src={song?.bigImg}
+                      className="rounded-xl object-cover w-full max-h-72 shadow-lg"
+                    />
+                  ) : (
+                    <img
+                      alt={song?.title}
+                      src={"./rainbow-icon.svg"}
+                      className="rounded-xl object-cover w-full max-h-72 shadow-lg"
+                    />
+                  )}
                   <div className="flex flex-col max-w-[200px]">
                     <h4 className="text-base font-semibold truncate text-white">
                       {song.title}

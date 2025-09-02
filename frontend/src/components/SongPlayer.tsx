@@ -70,11 +70,19 @@ export default function SongPlayer({
         {/* Body */}
         <CardBody className="flex flex-col gap-5 p-5">
           {/* Song Thumbnail */}
-          <img
-            alt={currentSong?.title}
-            src={currentSong?.bigImg}
-            className="rounded-xl object-cover w-full max-h-72 shadow-lg"
-          />
+          {currentSong?.bigImg ? (
+            <img
+              alt={currentSong?.title}
+              src={currentSong?.bigImg}
+              className="rounded-xl object-cover w-full max-h-72 shadow-lg"
+            />
+          ) : (
+            <img
+              alt={currentSong?.title}
+              src={"./rainbow-icon.svg"}
+              className="rounded-xl object-cover w-full max-h-72 shadow-lg"
+            />
+          )}
 
           {/* Progress bar */}
           <Progress
