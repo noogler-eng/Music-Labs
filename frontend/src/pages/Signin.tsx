@@ -30,6 +30,7 @@ export default function Signin() {
         imageUrl: userData.imageUrl,
         loading: false,
       });
+      navigate("/");
     } catch (error) {
       setUser(null);
       console.error(error);
@@ -49,7 +50,6 @@ export default function Signin() {
       const token = res.data.token;
       localStorage.setItem("token", `Bearer ${token}`);
       handleUserData();
-      navigate("/");
     } catch (error: any) {
       console.error("Error while signin:", error);
       setErrorMsg(
