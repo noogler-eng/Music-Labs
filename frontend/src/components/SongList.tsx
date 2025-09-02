@@ -4,6 +4,7 @@ import { useRecoilValue } from "recoil";
 import userAtom from "../../store/user/userAtom";
 import { Socket } from "socket.io-client";
 import { motion } from "framer-motion";
+import { Music } from "lucide-react";
 
 export default function SongsList({
   longQueue,
@@ -65,12 +66,7 @@ export default function SongsList({
                       width={60}
                     />
                   ) : (
-                    <img
-                      alt={song?.title}
-                      src={"rainbow-icon.svg"}
-                      className="rounded-xl object-cover shadow-lg"
-                      width={60}
-                    />
+                    <Music className="w-14 h-14 text-white" />
                   )}
                   <div className="flex flex-col max-w-[200px]">
                     <h4 className="text-base font-semibold truncate text-white">

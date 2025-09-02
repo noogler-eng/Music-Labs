@@ -9,6 +9,7 @@ import {
 import { useState } from "react";
 import { useRecoilValue } from "recoil";
 import userAtom from "../../store/user/userAtom";
+import { Music } from "lucide-react";
 
 export default function SongPlayer({
   currentSong,
@@ -77,11 +78,7 @@ export default function SongPlayer({
               className="rounded-xl object-cover w-full max-h-72 shadow-lg"
             />
           ) : (
-            <img
-              alt={currentSong?.title}
-              src={"rainbow-icon.svg"}
-              className="rounded-xl object-cover w-full max-h-72 shadow-lg"
-            />
+            <Music className="w-24 h-24 text-white" />
           )}
 
           {/* Progress bar */}
