@@ -68,7 +68,7 @@ export default function Navbar() {
         )}
 
         {/* Auth Buttons */}
-        {user ? (
+        {user?.name ? (
           <Button
             variant="ghost"
             onClick={() => {
