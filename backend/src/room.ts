@@ -100,6 +100,7 @@ class RoomManager {
       // console.log(videoData);
       // const length = videoData?.thumbnail?.thumbnails?.length;
 
+      // add to db
       await prisma.stream.create({
         data: {
           userId: streamId,
