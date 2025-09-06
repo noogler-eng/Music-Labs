@@ -59,35 +59,40 @@ class RoomManager {
   }
 
   async addSong(streamId: string, data: any) {
-    const room = this.rooms.get(streamId);
-    if (!room) return;
+    try {
+      const room = this.rooms.get(streamId);
+      if (!room) return;
 
-    const isSuccess = dataZod.safeParse(data);
-    const extractedId = isSuccess.data?.url.split("?v=")[1];
-    const isValidYTUrl: any = isSuccess.data?.url.match(YT_REGEX);
-    if (!isValidYTUrl) {
-      this.broadcastToRoom(streamId);
-      return;
+      const isSuccess = dataZod.safeParse(data);
+      const extractedId = isSuccess.data?.url.split("?v=")[1];
+      const isValidYTUrl: any = isSuccess.data?.url.match(YT_REGEX);
+      if (!isValidYTUrl) {
+        this.broadcastToRoom(streamId);
+        return;
+      }
+
+      console.log(extractedId);
+      const videoData = await youtubesearchapi.GetVideoDetails(extractedId);
+      console.log(videoData);
+      const length = videoData?.thumbnail?.thumbnails?.length;
+
+      await prisma.stream.create({
+        data: {
+          userId: streamId,
+          type: isSuccess.data?.url.includes("spotify") ? "SPOTIFY" : "YOUTUBE",
+          title: videoData?.title || "",
+          url: isSuccess.data?.url || "",
+          extractedId: extractedId || "",
+          smallImg: videoData?.thumbnail?.thumbnails[length - 2].url || "",
+          bigImg: videoData?.thumbnail?.thumbnails[length - 1].url || "",
+        },
+      });
+
+      await this.broadcastToRoom(streamId);
+    } catch (error) {
+      console.log("Error adding song:");
+      console.log(error);
     }
-
-    console.log(extractedId);
-    const videoData = await youtubesearchapi.GetVideoDetails(extractedId);
-    console.log(videoData);
-    const length = videoData?.thumbnail?.thumbnails?.length;
-
-    await prisma.stream.create({
-      data: {
-        userId: streamId,
-        type: isSuccess.data?.url.includes("spotify") ? "SPOTIFY" : "YOUTUBE",
-        title: videoData?.title || "",
-        url: isSuccess.data?.url || "",
-        extractedId: extractedId || "",
-        smallImg: videoData?.thumbnail?.thumbnails[length - 2].url || "",
-        bigImg: videoData?.thumbnail?.thumbnails[length - 1].url || "",
-      },
-    });
-
-    await this.broadcastToRoom(streamId);
   }
 
   async deleteSong(streamId: string, data: any) {
