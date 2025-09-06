@@ -1,8 +1,25 @@
 import { Server, Socket } from "socket.io";
 // @ts-ignore
-import youtubesearchapi from "youtube-search-api";
+// import youtubesearchapi from "youtube-search-api";
 import prisma from "./db/prisma";
 import { z } from "zod";
+import { google } from "googleapis";
+
+const youtube = google.youtube({
+  version: "v3",
+  auth: process.env.YOUTUBE_API_KEY,
+});
+
+async function getVideoDetails(videoId: string) {
+  const res = await youtube.videos.list({
+    // @ts-ignore
+    part: "snippet,contentDetails",
+    id: videoId,
+  });
+
+  // @ts-ignore
+  return res.data;
+}
 
 var YT_REGEX =
   /^(?:(?:https?:)?\/\/)?(?:www\.)?(?:m\.)?(?:youtu(?:be)?\.com\/(?:v\/|embed\/|watch(?:\/|\?v=))|youtu\.be\/)((?:\w|-){11})(?:\S+)?$/;
@@ -71,20 +88,27 @@ class RoomManager {
         return;
       }
 
-      console.log(extractedId);
-      const videoData = await youtubesearchapi.GetVideoDetails(extractedId);
-      console.log(videoData);
-      const length = videoData?.thumbnail?.thumbnails?.length;
+      const res = await getVideoDetails(extractedId || "");
+      console.log("details i am getting: ", res?.items[0]?.snippet);
+
+      if (res?.items[0]?.snippet?.title === undefined) {
+        this.broadcastToRoom(streamId);
+        return;
+      }
+
+      // const videoData = await youtubesearchapi.GetVideoDetails(extractedId);
+      // console.log(videoData);
+      // const length = videoData?.thumbnail?.thumbnails?.length;
 
       await prisma.stream.create({
         data: {
           userId: streamId,
           type: isSuccess.data?.url.includes("spotify") ? "SPOTIFY" : "YOUTUBE",
-          title: videoData?.title || "",
+          title: res?.items[0]?.snippet?.title || "",
           url: isSuccess.data?.url || "",
           extractedId: extractedId || "",
-          smallImg: videoData?.thumbnail?.thumbnails[length - 2].url || "",
-          bigImg: videoData?.thumbnail?.thumbnails[length - 1].url || "",
+          smallImg: res?.items[0]?.snippet?.thumbnails?.default?.url || "",
+          bigImg: res?.items[0]?.snippet?.thumbnails?.default?.url || "",
         },
       });
 
