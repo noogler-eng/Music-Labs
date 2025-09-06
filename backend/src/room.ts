@@ -3,23 +3,23 @@ import { Server, Socket } from "socket.io";
 // import youtubesearchapi from "youtube-search-api";
 import prisma from "./db/prisma";
 import { z } from "zod";
-import { google } from "googleapis";
+// import { google } from "googleapis";
 
-const youtube = google.youtube({
-  version: "v3",
-  auth: process.env.YOUTUBE_API_KEY,
-});
+// const youtube = google.youtube({
+//   version: "v3",
+//   auth: process.env.YOUTUBE_API_KEY,
+// });
 
-async function getVideoDetails(videoId: string) {
-  const res = await youtube.videos.list({
-    // @ts-ignore
-    part: "snippet,contentDetails",
-    id: videoId,
-  });
+// async function getVideoDetails(videoId: string) {
+//   const res = await youtube.videos.list({
+//     // @ts-ignore
+//     part: "snippet,contentDetails",
+//     id: videoId,
+//   });
 
-  // @ts-ignore
-  return res.data;
-}
+//   // @ts-ignore
+//   return res.data;
+// }
 
 var YT_REGEX =
   /^(?:(?:https?:)?\/\/)?(?:www\.)?(?:m\.)?(?:youtu(?:be)?\.com\/(?:v\/|embed\/|watch(?:\/|\?v=))|youtu\.be\/)((?:\w|-){11})(?:\S+)?$/;
@@ -88,13 +88,13 @@ class RoomManager {
         return;
       }
 
-      const res = await getVideoDetails(extractedId || "");
-      console.log("details i am getting: ", res?.items[0]?.snippet);
+      // const res = await getVideoDetails(extractedId || "");
+      // console.log("details i am getting: ", res?.items[0]?.snippet);
 
-      if (res?.items[0]?.snippet?.title === undefined) {
-        this.broadcastToRoom(streamId);
-        return;
-      }
+      // if (res?.items[0]?.snippet?.title === undefined) {
+      //   this.broadcastToRoom(streamId);
+      //   return;
+      // }
 
       // const videoData = await youtubesearchapi.GetVideoDetails(extractedId);
       // console.log(videoData);
@@ -105,11 +105,11 @@ class RoomManager {
         data: {
           userId: streamId,
           type: isSuccess.data?.url.includes("spotify") ? "SPOTIFY" : "YOUTUBE",
-          title: res?.items[0]?.snippet?.title || "",
+          title: "song from youtube",
           url: isSuccess.data?.url || "",
           extractedId: extractedId || "",
-          smallImg: res?.items[0]?.snippet?.thumbnails?.default?.url || "",
-          bigImg: res?.items[0]?.snippet?.thumbnails?.default?.url || "",
+          smallImg: "https://os-wordpress-media.s3.ap-south-1.amazonaws.com/blog/wp-content/uploads/2022/07/20161516/YouTube-Music.jpg",
+          bigImg: "https://os-wordpress-media.s3.ap-south-1.amazonaws.com/blog/wp-content/uploads/2022/07/20161516/YouTube-Music.jpg",
         },
       });
 
